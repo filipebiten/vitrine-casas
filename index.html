@@ -1,0 +1,359 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Vitrine de Casas</title><meta name="robots" content="noindex"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Besley:wght@500;600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* vitrine: grade de cards aprovados; clicar abre dossiê via hash, sem trocar de página */
+:root{
+  --bg:#eef0ec; --surface:#ffffff; --fg:#23271f; --fg-muted:#5b6156;
+  --line:#d7dbd1; --accent:#2f5d50; --accent-fg:#ffffff;
+  --fail:#8a2e23; --fail-bg:#f6e6e2; --pass:#3c6e3f; --pass-bg:#e6efe1;
+  --star:#b8860b; --star-off:#cdd2c6;
+  --font-display:'Besley',serif; --font-body:'Source Sans 3',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#181c16; --surface:#212619; --fg:#e8ebe2; --fg-muted:#9aa190;
+    --line:#333a2b; --accent:#7fb3a0; --accent-fg:#102019;
+    --fail:#e39284; --fail-bg:#3a241f; --pass:#9bc89e; --pass-bg:#1f2e1f;
+    --star:#d9ab3f; --star-off:#3a4032;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181c16; --surface:#212619; --fg:#e8ebe2; --fg-muted:#9aa190;
+  --line:#333a2b; --accent:#7fb3a0; --accent-fg:#102019;
+  --fail:#e39284; --fail-bg:#3a241f; --pass:#9bc89e; --pass-bg:#1f2e1f;
+  --star:#d9ab3f; --star-off:#3a4032;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--fg); font-family:var(--font-body);
+  padding-block:40px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  min-height:100%; line-height:1.5;
+}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header.page{display:flex;flex-direction:column;gap:4px;margin-bottom:4px}
+header.page .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted);margin:0}
+header.page h1{font-family:var(--font-display);font-weight:600;font-size:clamp(26px,4vw,34px);margin:0;text-wrap:balance}
+header.page p{margin:2px 0 0;color:var(--fg-muted);font-size:14px}
+
+/* ---- grid ---- */
+#grid-view .grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:8px;
+}
+.card-link{
+  display:block; text-decoration:none; color:inherit; background:var(--surface);
+  border:1px solid var(--line); border-radius:14px; padding:20px; cursor:pointer;
+  transition:border-color .15s ease; min-width:0; position:relative;
+}
+.card-link:hover{border-color:var(--accent)}
+.card-link:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.badgerow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:11px;
+  font-weight:500; letter-spacing:.04em; text-transform:uppercase; padding:4px 9px; border-radius:999px;
+  background:var(--pass-bg); color:var(--pass);
+}
+.badge::before{content:"●";font-size:9px}
+.card-link h3{font-family:var(--font-display);font-weight:600;font-size:17px;margin:0 0 4px;text-wrap:balance}
+.card-link .bairro{font-size:13px;color:var(--fg-muted);margin:0 0 12px}
+.card-link .preco{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:20px;font-weight:500;margin:0 0 10px}
+.rowstats{display:flex;gap:14px;font-size:13px;color:var(--fg-muted);flex-wrap:wrap;margin-bottom:12px}
+.rowstats b{color:var(--fg);font-variant-numeric:tabular-nums}
+.empty{
+  background:var(--surface); border:1px dashed var(--line); border-radius:14px; padding:28px;
+  text-align:center; color:var(--fg-muted); font-size:14px;
+}
+
+/* ---- controles: estrelas + excluir ---- */
+.controls{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.stars{display:flex;gap:2px}
+.star{background:none;border:none;cursor:pointer;padding:2px;font-size:17px;line-height:1;color:var(--star-off)}
+.star.on{color:var(--star)}
+.star:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.btn-excluir{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;text-transform:uppercase;
+  background:none;border:1px solid var(--line);color:var(--fg-muted);border-radius:999px;padding:5px 10px;cursor:pointer;
+}
+.btn-excluir:hover{border-color:var(--fail);color:var(--fail)}
+.btn-excluir.confirmando{border-color:var(--fail);color:var(--fail-bg);background:var(--fail)}
+
+/* ---- detail ---- */
+#detail-view{display:none}
+#detail-view.active{display:block}
+#grid-view.hidden{display:none}
+.back{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:13px;
+  color:var(--accent); text-decoration:none; margin-bottom:14px; cursor:pointer; border:none; background:none; padding:0;
+}
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:28px clamp(20px,5vw,36px); box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-muted);margin:0 0 6px}
+h1.title{font-family:var(--font-display);font-weight:600;font-size:clamp(24px,4vw,32px);margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--fg-muted);font-size:14px;margin:0 0 18px}
+.verdict{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;font-weight:500;
+  letter-spacing:.03em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:18px;
+}
+.verdict.aprovada{background:var(--pass-bg);color:var(--pass)}
+.verdict::before{content:"●";font-size:10px}
+.stats{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:14px;margin:18px 0;
+  padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.stat dt{font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 3px}
+.stat dd{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:18px;margin:0;font-weight:500}
+h2{font-family:var(--font-display);font-weight:600;font-size:17px;margin:22px 0 10px}
+.checklist{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:7px}
+.checklist li{display:flex;gap:10px;align-items:baseline;font-size:14px;padding:8px 10px;border-radius:8px;min-width:0}
+.checklist li.ok{background:var(--pass-bg)}
+.mark{font-family:var(--font-mono);font-size:12px;flex:none;width:16px;color:var(--pass)}
+.desejaveis{font-size:14px;color:var(--fg-muted);margin:0 0 4px}
+.desc{
+  font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);
+  border-radius:8px;padding:12px 14px;margin:6px 0 0;
+}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+td.k{color:var(--fg-muted);width:38%;font-family:var(--font-mono);font-size:12px}
+td.v{font-variant-numeric:tabular-nums}
+.na{color:var(--fg-muted);font-style:italic}
+footer.card-footer{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:12px;color:var(--fg-muted);padding-top:4px;
+}
+a{color:var(--accent)}
+.card-footer a{text-decoration:none;border-bottom:1px solid currentColor}
+.card-footer a:hover{opacity:.8}
+.notice{font-size:13px;color:var(--fg-muted);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+.detail-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px;flex-wrap:wrap}
+</style>
+
+<div class="wrap">
+  <p class="notice">Atualizado 23/10/2026. Casas de ZAP e InfoImóveis com suíte confirmada no anúncio. As notas e exclusões ficam salvas neste aparelho.</p>
+
+  <header class="page">
+    <p class="eyebrow">Busca de casa · Campo Grande/MS</p>
+    <h1>Casas aprovadas</h1>
+    <p id="count-sub"></p>
+  </header>
+
+  <div id="grid-view">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div id="detail-view">
+    <button class="back" onclick="location.hash=''">&larr; voltar pra vitrine</button>
+    <div class="card" id="detail-card"></div>
+  </div>
+</div>
+
+<script>
+let casasOriginal = [];
+
+const fmtBRL = n => n.toLocaleString("pt-BR", {style:"currency", currency:"BRL", maximumFractionDigits:0});
+
+const CHAVE = "vitrine-casas-v1";
+const estado = {}; // id -> {excluida, nota}
+let confirmTimer = null;
+
+function getEstado(id){ return estado[id] || {excluida:false, nota:0}; }
+
+function casasVisiveis(){
+  return casasOriginal
+    .filter(c => !getEstado(c.id).excluida)
+    .slice()
+    .sort((a,b) => getEstado(b.id).nota - getEstado(a.id).nota);
+}
+
+function starsHTML(id, nota){
+  let out = "";
+  for(let i=1;i<=5;i++){
+    out += `<button class="star ${i<=nota?'on':''}" data-id="${id}" data-nota="${i}" title="${i} estrela${i>1?'s':''}" aria-label="Nota ${i}">★</button>`;
+  }
+  return `<div class="stars">${out}</div>`;
+}
+
+function renderGrid(){
+  const grid = document.getElementById("grid");
+  const casas = casasVisiveis();
+  document.getElementById("count-sub").textContent =
+    casas.length ? casas.length + (casas.length === 1 ? " casa aprovada nesse teste." : " casas aprovadas.") : "";
+  if(!casas.length){
+    grid.innerHTML = '<div class="empty">Nenhuma casa aprovada ainda.</div>';
+    return;
+  }
+  grid.innerHTML = casas.map(c => {
+    const est = getEstado(c.id);
+    return `
+    <div class="card-link" data-card-id="${c.id}">
+      <a href="#casa-${c.id}" style="display:block;text-decoration:none;color:inherit">
+        <div class="badgerow"><span class="badge">Aprovada</span></div>
+        <h3>${c.titulo}</h3>
+        <p class="bairro">${c.bairro} · ${c.portal}</p>
+        <p class="preco">${fmtBRL(c.preco)}</p>
+        <div class="rowstats">
+          <span><b>${c.areaConstruida}</b> m²</span>
+          <span><b>${c.quartos}</b> quartos</span>
+          <span><b>${c.suites}</b> suíte</span>
+          <span><b>${c.banheiros}</b> banheiros</span>
+        </div>
+      </a>
+      <div class="controls">
+        ${starsHTML(c.id, est.nota)}
+        <button class="btn-excluir" data-id="${c.id}">Excluir</button>
+      </div>
+    </div>
+  `;}).join("");
+}
+
+function renderDetail(casa){
+  const est = getEstado(casa.id);
+  const financTxt = casa.aceitaFinanciamento === true ? "Sim — citado no anúncio"
+    : casa.aceitaFinanciamento === false ? "Não citado / não aceita"
+    : "n/d (portal não lista esse campo)";
+  document.getElementById("detail-card").innerHTML = `
+    <p class="eyebrow">Dossiê · ${casa.portal} · ID ${casa.id}</p>
+    <h1 class="title">${casa.titulo}</h1>
+    <p class="sub">${casa.bairro}, Campo Grande/MS — publicado: ${casa.publicado} · ${casa.anunciante}</p>
+    <div class="detail-controls">
+      <span class="verdict aprovada">Aprovada</span>
+      ${starsHTML(casa.id, est.nota)}
+      <button class="btn-excluir" data-id="${casa.id}">Excluir desta vitrine</button>
+    </div>
+    <dl class="stats">
+      <div class="stat"><dt>Preço</dt><dd>${fmtBRL(casa.preco)}</dd></div>
+      <div class="stat"><dt>Construída</dt><dd>${casa.areaConstruida} m²</dd></div>
+      <div class="stat"><dt>Terreno</dt><dd>${casa.areaTerreno ?? 'n/d'}</dd></div>
+      <div class="stat"><dt>Quartos</dt><dd>${casa.quartos}</dd></div>
+      <div class="stat"><dt>Suítes</dt><dd>${casa.suites}</dd></div>
+      <div class="stat"><dt>Banheiros</dt><dd>${casa.banheiros}</dd></div>
+      <div class="stat"><dt>Vagas</dt><dd>${casa.vagas ?? 'n/d'}</dd></div>
+    </dl>
+    <h2>Eliminatórios</h2>
+    <ul class="checklist">
+      <li class="ok"><span class="mark">OK</span><span>Casa (não sobrado) — confirmado pelo filtro do portal</span></li>
+      <li class="${casa.terrea === 's' ? 'ok' : ''}"><span class="mark">${casa.terrea === 's' ? 'OK' : '?'}</span><span>Térrea, sem escada — ${casa.terrea === 's' ? 'confirmado no anúncio' : 'não confirmado, checar na visita'}</span></li>
+      <li class="ok"><span class="mark">OK</span><span>3+ quartos — ${casa.quartos}</span></li>
+      <li class="ok"><span class="mark">OK</span><span>1+ suíte — confirmada no texto do anúncio</span></li>
+      <li class="ok"><span class="mark">OK</span><span>Banheiro social além da suíte — ${casa.banheiros} banheiros no total (proxy, não 100% garantido)</span></li>
+      <li class="ok"><span class="mark">OK</span><span>Mais de 100 m² construídos — ${casa.areaConstruida} m²</span></li>
+    </ul>
+    <h2>Financiamento</h2>
+    <p class="desejaveis">${financTxt}</p>
+    <h2>Desejáveis</h2>
+    <p class="desejaveis">Quintal gramado: ${casa.quintal}.${casa.extras.length ? ' Extras: ' + casa.extras.join(", ") + '.' : ''}</p>
+    <h2>Pergunta A — abaixo do mercado?</h2>
+    <p class="desejaveis">${casa.perguntaA}</p>
+    <h2>Pergunta B — vendedor negocia?</h2>
+    <p class="desejaveis">${casa.perguntaB}</p>
+    <h2>Descrição original</h2>
+    <p class="desc">${casa.descricao}</p>
+    <h2>Ficha completa</h2>
+    <table>
+      <tr><td class="k">regiao_urbana</td><td class="v na">${casa.regiao}</td></tr>
+      <tr><td class="k">condominio_mensal</td><td class="v na">${casa.condominioMensal}</td></tr>
+      <tr><td class="k">iptu</td><td class="v na">${casa.iptu}</td></tr>
+      <tr><td class="k">historico_preco</td><td class="v na">${casa.historicoPreco}</td></tr>
+      <tr><td class="k">valor_avaliacao</td><td class="v na">${casa.valorAvaliacao}</td></tr>
+    </table>
+    <footer class="card-footer">
+      <span>R$ ${(casa.preco / casa.areaConstruida).toFixed(0)}/m²</span>
+      <a href="${casa.url}" target="_blank" rel="noopener">Ver anúncio original →</a>
+    </footer>
+  `;
+}
+
+function route(){
+  const hash = location.hash.replace("#", "");
+  const grid = document.getElementById("grid-view");
+  const detail = document.getElementById("detail-view");
+  if(hash.startsWith("casa-")){
+    const id = hash.slice(5);
+    const casa = casasOriginal.find(c => c.id === id);
+    if(casa && !getEstado(id).excluida){
+      renderDetail(casa);
+      grid.classList.add("hidden");
+      detail.classList.add("active");
+      window.scrollTo(0,0);
+      return;
+    }
+    location.hash = "";
+  }
+  grid.classList.remove("hidden");
+  detail.classList.remove("active");
+}
+
+async function setNota(id, nota){
+  const cur = getEstado(id);
+  const novaNota = cur.nota === nota ? 0 : nota; // clicar na mesma estrela zera
+  estado[id] = {...cur, nota: novaNota};
+  renderGrid();
+  if(location.hash === "#casa-"+id){
+    const casa = casasOriginal.find(c => c.id === id);
+    if(casa) renderDetail(casa);
+  }
+  salvarLocal();
+}
+
+async function excluirCasa(id){
+  estado[id] = {...getEstado(id), excluida: true};
+  if(location.hash === "#casa-"+id) location.hash = "";
+  renderGrid();
+  salvarLocal();
+}
+
+function onClick(ev){
+  const star = ev.target.closest(".star");
+  if(star){
+    ev.preventDefault();
+    setNota(star.dataset.id, Number(star.dataset.nota));
+    return;
+  }
+  const btn = ev.target.closest(".btn-excluir");
+  if(btn){
+    ev.preventDefault();
+    ev.stopPropagation();
+    const id = btn.dataset.id;
+    if(btn.classList.contains("confirmando")){
+      clearTimeout(confirmTimer);
+      excluirCasa(id);
+    } else {
+      document.querySelectorAll(".btn-excluir.confirmando").forEach(b => { b.classList.remove("confirmando"); b.textContent = "Excluir"; });
+      btn.classList.add("confirmando");
+      btn.textContent = "Confirmar exclusão";
+      confirmTimer = setTimeout(() => { btn.classList.remove("confirmando"); btn.textContent = btn.closest("#detail-view") ? "Excluir desta vitrine" : "Excluir"; }, 4000);
+    }
+    return;
+  }
+}
+
+document.addEventListener("click", onClick);
+
+function salvarLocal(){
+  try{ localStorage.setItem(CHAVE, JSON.stringify(estado)); }catch(e){}
+}
+
+async function iniciar(){
+  try{
+    const [rc, re] = await Promise.all([fetch("casas.json",{cache:"no-store"}), fetch("estado.json",{cache:"no-store"})]);
+    casasOriginal = await rc.json();
+    Object.assign(estado, await re.json());
+  }catch(e){
+    document.getElementById("count-sub").textContent = "Não consegui carregar a lista de casas.";
+    return;
+  }
+  try{
+    const local = JSON.parse(localStorage.getItem(CHAVE) || "{}");
+    Object.assign(estado, local);
+  }catch(e){}
+  renderGrid();
+  route();
+}
+
+window.addEventListener("hashchange", route);
+iniciar();
+</script>
+
+</body></html>
